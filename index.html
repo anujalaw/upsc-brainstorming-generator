@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UPSC Brainstorming Sheet Generator</title>
-    <!-- Tailwind CSS for modern UI styling -->
+    <title>UPSC Bulk Brainstorming Sheet Generator</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html2pdf library for PDF generation -->
+    <!-- html2pdf library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
 
-        /* A4 Page Styling for Printing/PDF Export */
         .a4-page {
             width: 210mm;
             min-height: 297mm;
             padding: 15mm;
-            margin: 0 auto;
+            margin: 0 auto 20px auto;
             background: white;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             position: relative;
             box-sizing: border-box;
+            page-break-after: always;
         }
 
         @media print {
@@ -29,171 +29,141 @@
             .no-print { display: none !important; }
             .a4-page { box-shadow: none; margin: 0; width: 100%; min-height: 100vh; }
         }
-
-        /* Diagonal Watermark */
-        .watermark {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-35deg);
-            font-size: 5rem;
-            font-weight: 800;
-            color: rgba(200, 200, 200, 0.12);
-            pointer-events: none;
-            letter-spacing: 0.2em;
-            z-index: 0;
-            white-space: nowrap;
-        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen">
 
-    <!-- Top Navigation / Header (Hidden when printing/exporting) -->
+    <!-- Header -->
     <header class="no-print bg-slate-900 text-white shadow-md py-4 px-6 mb-8">
-        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <div>
-                <h1 class="text-xl font-bold tracking-tight">UPSC Brainstorming Sheet Generator</h1>
-                <p class="text-xs text-slate-400">Create printable practice brainstorming sheets instantly for free.</p>
+                <h1 class="text-xl font-bold tracking-tight">UPSC Bulk Brainstorming Sheet Generator</h1>
+                <p class="text-xs text-slate-400">Paste multiple questions to generate multi-page brainstorming booklets in seconds.</p>
             </div>
             <button onclick="downloadPDF()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-2.5 rounded-lg shadow transition flex items-center gap-2 text-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                Download Sheet as PDF
+                Download All Pages as PDF
             </button>
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 pb-16 grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <main class="max-w-7xl mx-auto px-4 pb-16 grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        <!-- Controls Sidebar (Hidden in print) -->
+        <!-- Controls Sidebar -->
         <div class="no-print lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-5 h-fit">
             <h2 class="font-semibold text-slate-900 border-b pb-3 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
-                Sheet Content Details
+                Bulk Questions Input
             </h2>
 
             <div>
-                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Topic / Header Category</label>
-                <input type="text" id="inputTopic" value="Industries: Industrial Policy, Labour Laws and Related Issues" oninput="updateSheet()" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Global Subject / Header Topic</label>
+                <input type="text" id="globalTopic" value="General Studies - Indian Economy & Governance" oninput="renderSheets()" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             </div>
 
             <div>
-                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Question Text</label>
-                <textarea id="inputQuestion" rows="5" oninput="updateSheet()" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">With a consideration towards the strategy of inclusive growth, the new Companies Bill, 2013 has indirectly made CSR a mandatory obligation. Discuss the challenges expected in its implementation in right earnest. Also discuss other provisions in the Bill and their implications.</textarea>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Questions List (One per line)</label>
+                <textarea id="bulkQuestions" rows="12" oninput="renderSheets()" placeholder="Paste your 50 questions here..." class="w-full text-xs font-mono border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">Discuss the salient features of the Harappan architecture. [10 Marks, 150 Words] (2025)
+Examine the main aspects of Akbar's religious syncretism. [10 Marks, 150 Words] (2025)
+With a consideration towards the strategy of inclusive growth, the new Companies Bill, 2013 has indirectly made CSR a mandatory obligation. Discuss the challenges expected in its implementation in right earnest. [12.5 Marks, 200 Words] (2013)</textarea>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Marks & Words</label>
-                    <input type="text" id="inputMarks" value="12.5 marks, 200 words" oninput="updateSheet()" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Year</label>
-                    <input type="text" id="inputYear" value="2013" oninput="updateSheet()" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Question Number</label>
-                <input type="text" id="inputQNo" value="Q.205" oninput="updateSheet()" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <div class="text-xs text-slate-500 border-t pt-3">
+                <strong>Tip:</strong> You can paste up to 50+ questions at once into the text box above! Each line automatically generates its own printable page.
             </div>
         </div>
 
         <!-- Sheet Preview Area -->
-        <div class="lg:col-span-2 overflow-x-auto flex justify-center">
-            <div id="pdfContent" class="a4-page flex flex-col justify-between text-slate-800">
-                
-                <!-- Watermark -->
-                <div class="watermark">BRAINSTORMING</div>
-
-                <!-- Top Header Box matching ForumIAS layout -->
-                <div>
-                    <div class="border border-black flex flex-col sm:flex-row text-xs font-bold">
-                        <div id="previewTopic" class="p-2 border-b sm:border-b-0 sm:border-r border-black flex-grow bg-slate-50 uppercase tracking-wide">
-                            Industries: Industrial Policy, Labour Laws and Related Issues
-                        </div>
-                        <div class="p-2 bg-slate-100 whitespace-nowrap text-center sm:text-left">
-                            Companies Bill-> CSR
-                        </div>
-                    </div>
-
-                    <!-- Additional Updates & Question Section -->
-                    <div class="grid grid-cols-12 border-x border-b border-black">
-                        <!-- Left Column: Additional Updates Margin -->
-                        <div class="col-span-4 border-r border-black p-3 flex flex-col justify-between">
-                            <div>
-                                <div class="text-[11px] font-bold tracking-wider text-slate-600 uppercase text-center border-b border-dashed border-slate-400 pb-1 mb-2">
-                                    Additional Updates
-                                </div>
-                                <div class="text-center">
-                                    <span class="text-xs font-bold inline-block">&#8595;</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right Column: Question Box -->
-                        <div class="col-span-8 p-3 text-xs leading-relaxed">
-                            <span id="previewQNo" class="font-bold">Q.205</span> 
-                            <span id="previewQuestion">With a consideration towards the strategy of inclusive growth, the new Companies Bill, 2013 has indirectly made CSR a mandatory obligation. Discuss the challenges expected in its implementation in right earnest. Also discuss other provisions in the Bill and their implications.</span>
-                            <div id="previewMeta" class="text-right font-semibold mt-2 text-slate-700">
-                                (12.5 marks, 200 words) (2013)
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Main Brainstorming Space Body -->
-                <div class="flex-grow grid grid-cols-12 border-x border-b border-black my-4 relative flex-1 min-h-[500px]">
-                    <!-- Left Section matching updates lane -->
-                    <div class="col-span-4 border-r border-black p-2"></div>
-                    
-                    <!-- Right Section Brainstorming Space lane with centered vertical header label -->
-                    <div class="col-span-8 relative flex items-center justify-center">
-                        <div class="absolute left-3 top-2 flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                            <span>Brainstorming Space</span>
-                            <span>&#8594;</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Footer Page Number -->
-                <div class="flex justify-between items-center text-xs font-semibold text-slate-600 pt-2 border-t border-slate-200">
-                    <span id="previewQNoFooter">205</span>
-                    <div class="flex gap-4">
-                        <span>UPSC Brainstorming Practice</span>
-                    </div>
-                </div>
-
+        <div class="lg:col-span-2 overflow-x-auto flex flex-col items-center">
+            <div id="pdfContainer" class="w-full">
+                <!-- Dynamic A4 Pages will be generated here -->
             </div>
         </div>
 
     </main>
 
-    <!-- Script to handle live preview typing and PDF downloading -->
     <script>
-        function updateSheet() {
-            document.getElementById('previewTopic').innerText = document.getElementById('inputTopic').value;
-            document.getElementById('previewQuestion').innerText = document.getElementById('inputQuestion').value;
-            document.getElementById('previewMarks').innerText = '(' + document.getElementById('inputMarks').value + ') (' + document.getElementById('inputYear').value + ')';
+        function renderSheets() {
+            const container = document.getElementById('pdfContainer');
+            const globalTopic = document.getElementById('globalTopic').value || "UPSC Practice Sheet";
+            const rawText = document.getElementById('bulkQuestions').value;
             
-            // Reconstruct meta line cleanly
-            const marksVal = document.getElementById('inputMarks').value;
-            const yearVal = document.getElementById('inputYear').value;
-            document.getElementById('previewMeta').innerText = `(${marksVal}) (${yearVal})`;
+            // Split questions by non-empty lines
+            const questions = rawText.split('\n').map(q => q.trim()).filter(q => q.length > 0);
+            
+            container.innerHTML = '';
 
-            const qNo = document.getElementById('inputQNo').value;
-            document.getElementById('previewQNo').innerText = qNo;
-            document.getElementById('previewQNoFooter').innerText = qNo.replace(/[^0-9]/g, '');
+            if (questions.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-12">No questions entered. Paste your questions on the left.</div>';
+                return;
+            }
+
+            questions.forEach((qText, index) => {
+                const qNo = `Q.${index + 1}`;
+                
+                const pageHtml = `
+                    <div class="a4-page flex flex-col justify-between text-slate-800 mb-8">
+                        <!-- Top Header Box -->
+                        <div>
+                            <div class="border border-black flex text-xs font-bold">
+                                <div class="p-2 border-r border-black flex-grow bg-slate-50 uppercase tracking-wide">
+                                    ${globalTopic}
+                                </div>
+                                <div class="p-2 bg-slate-100 whitespace-nowrap">
+                                    Brainstorming Mode
+                                </div>
+                            </div>
+
+                            <!-- Additional Updates & Question Section -->
+                            <div class="grid grid-cols-12 border-x border-b border-black">
+                                <div class="col-span-4 border-r border-black p-3 flex flex-col justify-between">
+                                    <div>
+                                        <div class="text-[11px] font-bold tracking-wider text-slate-600 uppercase text-center border-b border-dashed border-slate-400 pb-1 mb-2">
+                                            Additional Updates
+                                        </div>
+                                        <div class="text-center">
+                                            <span class="text-xs font-bold inline-block">&#8595;</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-span-8 p-3 text-xs leading-relaxed">
+                                    <span class="font-bold">${qNo})</span> ${qText}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Brainstorming Space Body -->
+                        <div class="flex-grow grid grid-cols-12 border-x border-b border-black my-4 relative flex-1 min-h-[500px]">
+                            <div class="col-span-4 border-r border-black p-2"></div>
+                            <div class="col-span-8 relative flex items-center justify-center">
+                                <div class="absolute left-3 top-2 flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                                    <span>Brainstorming Space</span>
+                                    <span>&#8594;</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="flex justify-between items-center text-xs font-semibold text-slate-600 pt-2 border-t border-slate-200">
+                            <span>Question ${index + 1} of ${questions.length}</span>
+                            <span>UPSC Practice Booklet</span>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', pageHtml);
+            });
         }
 
         function downloadPDF() {
-            const element = document.getElementById('pdfContent');
+            const element = document.getElementById('pdfContainer');
             const opt = {
                 margin:       0,
-                filename:     'upsc-brainstorming-sheet.pdf',
+                filename:     'upsc-brainstorming-booklet.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2, useCORS: true },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -201,6 +171,9 @@
 
             html2pdf().from(element).set(opt).save();
         }
+
+        // Initial render on load
+        renderSheets();
     </script>
 </body>
 </html>
